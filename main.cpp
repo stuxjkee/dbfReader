@@ -4,7 +4,6 @@
 #include <conio.h>
 #include <Windows.h>
 
-
 using namespace std;
 
 #define cls system("cls")
@@ -76,24 +75,16 @@ int main()
 				int k = (80 - strlen(mmenu[i])) / 2;
 				if (i==p)
 				{
-					gotoxy(29,+8+i*2);
+					gotoxy(29,8+i*2);
 					putchar('>');
 				}
 				gotoxy(k,8+i*2); puts(mmenu[i]);
 			}
 			code = _getch();
 			if (code == 80)
-			{
-				++p;
-				if (p > 2)
-					p = 0;
-			}
+				p > 1 ? p = 0 : ++p;
 			if (code == 72)
-			{
-				--p;
-				if (p < 0)
-					p = 2;
-			}
+				p < 1 ? p = 2 : --p;
 		} while (code != 13);
 		switch (p) 
 			{
@@ -101,14 +92,18 @@ int main()
 				do
 				{
 					cls;
-					printf("Input filename (example: travel.dbf) >: ");
+					printf("Input filename >: ");
 					gets(dbFileName);
+					if (!strstr(dbFileName,".dbf"))
+					{
+						strcat(dbFileName,".dbf");
+						dbFileName[strlen(dbFileName)] = '\0';
+					}
 					dbFileAble = openFile(dbFileName);
 				} while (!dbFileAble);
 				getRecords();
 				do
 				{
-					
 					int fp = 0; pcode = 0;
 					do
 					{
@@ -126,17 +121,10 @@ int main()
 						}
 						pcode = _getch();
 						if (pcode == 80)
-						{
-							++fp;
-							if (fp > 2)
-								fp = 0;
-						}
+							fp > 1 ? fp = 0 : ++fp;
 						if (pcode == 72)
-						{
-							--fp;
-							if (fp < 0)
-								fp = 2;
-						}
+							fp < 1 ? fp = 2 : --fp;
+							
 					} while (pcode!=13);
 					switch (fp) 
 					{
@@ -153,7 +141,6 @@ int main()
 					case 1:
 						{
 						cls;
-						
 						int i = 0;
 						int listcode = 0;
 						do 
@@ -161,16 +148,13 @@ int main()
 							if (dbFieldContent[i*dbFieldCnt][0]=='*')
 								continue;
 							cls;
-							
-							
 								gotoxy(30,0); printf("Current record: #%d of %d\n",i+1,dbHead.recordsCount);
 								for (int j = 0; j < 80; j++)
 									putchar('-');
 								gotoxy(10,2); printf("Press %c to show next record",char(26));
 								gotoxy(45,2); printf("Press %c tp show prev record",char(27));
 								gotoxy(10,3); printf("Press ESC to return to menu");
-								gotoxy(45,3); printf("Press E to record current record\n");
-								
+								gotoxy(45,3); printf("Press E to record current record\n");								
 								for (int j = 0; j < 80; j++)
 									putchar('-');
 								putchar('\n');
@@ -180,7 +164,7 @@ int main()
 									i>=dbHead.recordsCount-1 ? i = 0 : ++i;
 								if (listcode == 75)
 									i<=0 ? i = dbHead.recordsCount-1 : --i;
-								if (listcode == 133 || listcode == 101)
+								if (strchr("Ee",char(listcode)))
 								{
 									char full;
 									do
@@ -266,7 +250,6 @@ int main()
 				leave = true;
 				break;
 			}
-	
 	} 
 }
 
