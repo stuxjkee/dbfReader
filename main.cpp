@@ -61,10 +61,10 @@ void printRecord(int i);
 int main()
 {
 	system("color 07");
-	bool leave = false;
+	bool leave = false, pleave = false;
 	int code = 0, pcode = 0, punkts = 3, p = 0;
 	char mmenu[3][30] = {"Open DBF file","About program","Exit"};
-	char fmenu[3][40] = {"Information about database", "Show recors", "Exit"};
+	char fmenu[3][40] = {"Information about database", "Show recors", "Back"};
 	while (!leave)
 	{
 		do
@@ -108,15 +108,39 @@ int main()
 				getRecords();
 				do
 				{
-					cls;
-					puts("Make a choise: \n");
-					puts("1: Show information about this database");
-					puts("2: Show database\n");
-					puts("ESC: Exit");
-					pcode = _getch();
-					switch (pcode) 
+					
+					int fp = 0; pcode = 0;
+					do
 					{
-					case 49:
+						cls;
+						puts("---------------------------- Please make a choise: -----------------------------");
+						for (int i = 0; i < punkts; i++)
+						{
+							int k = (80 - strlen(fmenu[i])) / 2;
+							if (i==fp)
+							{
+								gotoxy(23,+8+i*2);
+								putchar('>');
+							}
+							gotoxy(k,8+i*2); puts(fmenu[i]);
+						}
+						pcode = _getch();
+						if (pcode == 80)
+						{
+							++fp;
+							if (fp > 2)
+								fp = 0;
+						}
+						if (pcode == 72)
+						{
+							--fp;
+							if (fp < 0)
+								fp = 2;
+						}
+					} while (pcode!=13);
+					switch (fp) 
+					{
+					case 0:
 						cls;
 						printf("Information about %s\n\n",dbFileName);
 						printf("Last update: %d.%d.%d\n",dbHead.dd,dbHead.mm,dbHead.yy);
@@ -126,7 +150,8 @@ int main()
 						printf("Size of record: %d\n\n",dbHead.recordSize);
 						wait;
 						break;
-					case 50:
+					case 1:
+						{
 						cls;
 						
 						int i = 0;
@@ -141,10 +166,11 @@ int main()
 								gotoxy(30,0); printf("Current record: #%d of %d\n",i+1,dbHead.recordsCount);
 								for (int j = 0; j < 80; j++)
 									putchar('-');
-								gotoxy(10,3); printf("Press %c to show next record",char(26));
-								gotoxy(45,3); printf("Press %c tp show prev record",char(27));
-								gotoxy(10,4); printf("Press ESC to return to menu");
-								gotoxy(45,4); printf("Press E to record current record\n");
+								gotoxy(10,2); printf("Press %c to show next record",char(26));
+								gotoxy(45,2); printf("Press %c tp show prev record",char(27));
+								gotoxy(10,3); printf("Press ESC to return to menu");
+								gotoxy(45,3); printf("Press E to record current record\n");
+								
 								for (int j = 0; j < 80; j++)
 									putchar('-');
 								putchar('\n');
@@ -154,13 +180,56 @@ int main()
 									i>=dbHead.recordsCount-1 ? i = 0 : ++i;
 								if (listcode == 75)
 									i<=0 ? i = dbHead.recordsCount-1 : --i;
-							
+								if (listcode == 133 || listcode == 101)
+								{
+									char full;
+									do
+									{
+										cls;
+										printf("Edit full record? (y/n) or 'b' for back>: ");
+										scanf("%c",&full);
+									} while (!strchr("YyNnBb",full));
+									if (strchr("Nn",full))
+									{
+										for (int j = 0; j < dbFieldCnt; j++)
+											printf("\n%d: %s",j,dbFields[j].fieldName);
+										printf("\nInput number of field >: ");
+										int num;
+										scanf("%d",&num);
+										printf("\nInput new value of %s >: ",dbFields[num].fieldName);
+										char *temp = new char[255];
+										cin.ignore();
+										gets(temp);
+										editField(i,num,temp);
+										delete(temp);
+										wait;
+									}
+									if (strchr("Yy",full))
+									{
+										cin.ignore();
+										for (int j = 0; j < dbFieldCnt; j++)
+										{
+											printf("\nInput new value for %s >: ",dbFields[j].fieldName);
+											char *temp = new char[255];
+											gets(temp);
+											editField(i,j,temp);
+											delete(temp);
+										}
+										wait;
+									}
+									if (strchr("Bb",full))
+										break;
+								}
 							
 						} while (listcode!=27);
 					
 						break;
+						}
+					case 2:
+						pleave = true;
+						break;
 					}
-				} while (pcode != 27);
+				} while (!pleave);
 				break;
 		
 			case 1:
@@ -251,7 +320,6 @@ void editField(int rec, int field, char *value)
 	if (dbFields[field].fieldSize > strlen(value))
 		for (int i = strlen(value); i < dbFields[field].fieldSize; i++)
 			push_back(dbFieldContent[rec*dbFieldCnt+field],' ');
-	//cout << (int)dbFields[0].fieldSize << " " << strlen(dbFieldContent[rec*dbFieldCnt+field]) << endl;
 }
 
 void makeNew()
@@ -272,8 +340,6 @@ void makeNew()
 			temp[strlen(temp)+1] = '\0';
 		}
 		fwrite(temp,dbHead.recordSize,1,tmp);
-		//cout << temp << endl;
-		
 	}
 }
 
