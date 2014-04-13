@@ -35,7 +35,7 @@ struct field
 };
 
 FILE *dbFile,*readme;
-char *dbFileName;
+char *dbFileName = new char[255];
 bool dbFileAble = false;
 header dbHead;
 field dbFields[128];
@@ -101,9 +101,9 @@ int main()
 				do
 				{
 					cls;
-					dbFileName = "travel.dbf";
+					printf("Input filename (example: travel.dbf) >: ");
+					gets(dbFileName);
 					dbFileAble = openFile(dbFileName);
-
 				} while (!dbFileAble);
 				getRecords();
 				do
@@ -119,7 +119,7 @@ int main()
 							int k = (80 - strlen(fmenu[i])) / 2;
 							if (i==fp)
 							{
-								gotoxy(23,+8+i*2);
+								gotoxy(23,8+i*2);
 								putchar('>');
 							}
 							gotoxy(k,8+i*2); puts(fmenu[i]);
@@ -143,7 +143,7 @@ int main()
 					case 0:
 						cls;
 						printf("Information about %s\n\n",dbFileName);
-						printf("Last update: %d.%d.%d\n",dbHead.dd,dbHead.mm,dbHead.yy);
+						printf("Last update: %d%d%d\n",dbHead.dd,dbHead.mm,dbHead.yy);
 						printf("Total records: %d\n",dbHead.recordsCount);
 						printf("Total fields: %d\n",dbFieldCnt);
 						printf("Size of header: %d\n",dbHead.headerSize);
@@ -220,9 +220,26 @@ int main()
 									if (strchr("Bb",full))
 										break;
 								}
-							
+								
 						} while (listcode!=27);
-					
+						char savecode = 0;
+						do
+						{
+							cls;
+							printf("Save changes? (y/n) >: ");
+							scanf("%c",&savecode);
+							if (strchr("Yy",savecode))
+							{
+								makeNew();
+								puts("\nGood luck!\n");
+								wait;
+							}
+							if (strchr("Nn",savecode))
+							{
+								puts("Good luck!\n");
+								wait;
+							}
+						} while (!strchr("YyNn",savecode));
 						break;
 						}
 					case 2:
@@ -308,6 +325,7 @@ void getRecords()
 			contentStart += dbFields[j].fieldSize;
 		}
 	}
+	fclose(dbFile);
 }
 
 void editField(int rec, int field, char *value)
@@ -324,7 +342,8 @@ void editField(int rec, int field, char *value)
 
 void makeNew()
 {
-	FILE *tmp = fopen("tmp.dbf","wb");
+	
+	FILE *tmp = fopen(dbFileName,"wb");
 	fwrite(&dbHead,32,1,tmp);
 	for (int i = 0; i < dbFieldCnt; i++)
 		fwrite(&dbFields[i],32,1,tmp);
@@ -341,6 +360,7 @@ void makeNew()
 		}
 		fwrite(temp,dbHead.recordSize,1,tmp);
 	}
+	fclose(tmp);
 }
 
 bool deleteRecord(int i)
