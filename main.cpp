@@ -51,7 +51,7 @@ bool openFile(char *dbFileName);
 void getHeader();
 void getFields();
 void getRecords();
-void editField(int rec, int field, char *value);
+bool editField(int rec, int field, char *value);
 void makeNew();
 bool deleteRecord(int i);
 void printRecord(int i);
@@ -89,9 +89,13 @@ int main()
 		switch (p) 
 			{
 			case 0:
+				cls;
+				system("dir *.dbf");
+				putchar('\n');
 				do
 				{
-					cls;
+					fflush(stdin);
+					putchar('\n');
 					printf("Input filename >: ");
 					gets(dbFileName);
 					if (!strstr(dbFileName,".dbf"))
@@ -100,8 +104,11 @@ int main()
 						dbFileName[strlen(dbFileName)] = '\0';
 					}
 					dbFileAble = openFile(dbFileName);
+					if (!dbFileAble)
+						printf("Can't open %s Try again...\n",dbFileName);
 				} while (!dbFileAble);
 				getRecords();
+				
 				do
 				{
 					int fp = 0; pcode = 0;
@@ -144,66 +151,71 @@ int main()
 						int i = 0;
 						int listcode = 0;
 						do 
-						{
-							if (dbFieldContent[i*dbFieldCnt][0]=='*')
-								continue;
+						{	
 							cls;
-								gotoxy(30,0); printf("Current record: #%d of %d\n",i+1,dbHead.recordsCount);
-								for (int j = 0; j < 80; j++)
-									putchar('-');
-								gotoxy(10,2); printf("Press %c to show next record",char(26));
-								gotoxy(45,2); printf("Press %c tp show prev record",char(27));
-								gotoxy(10,3); printf("Press ESC to return to menu");
-								gotoxy(45,3); printf("Press E to record current record\n");								
-								for (int j = 0; j < 80; j++)
-									putchar('-');
-								putchar('\n');
-								printRecord(i);
-								listcode = _getch();
-								if (listcode == 77)
-									i>=dbHead.recordsCount-1 ? i = 0 : ++i;
-								if (listcode == 75)
-									i<=0 ? i = dbHead.recordsCount-1 : --i;
-								if (strchr("Ee",char(listcode)))
+							gotoxy(30,0); printf("Current record: #%d of %d\n",i+1,dbHead.recordsCount);
+							for (int j = 0; j < 80; j++)
+								putchar('-');
+							gotoxy(10,2); printf("Press %c to show next record",char(26));
+							gotoxy(45,2); printf("Press %c to show prev record",char(27));
+							gotoxy(10,3); printf("Press ESC to return to menu");
+							gotoxy(45,3); printf("Press E to record current record\n");								
+							for (int j = 0; j < 80; j++)
+								putchar('-');
+							putchar('\n');
+							printRecord(i);
+							listcode = _getch();
+							if (listcode == 77)
+								i>=dbHead.recordsCount-1 ? i = 0 : ++i;
+							if (listcode == 75)
+								i<=0 ? i = dbHead.recordsCount-1 : --i;
+							if (strchr("Ee",char(listcode)))
+							{
+								char full;
+								do
 								{
-									char full;
-									do
+									cls;
+									printf("Edit full record? (y/n) or 'b' for back>: ");
+									scanf("%c",&full);
+								} while (!strchr("YyNnBb",full));
+								if (strchr("Nn",full))
+								{
+									for (int j = 0; j < dbFieldCnt; j++)
+										printf("\n%d: %s",j,dbFields[j].fieldName);
+									printf("\nInput number of field >: ");
+									int num;
+									scanf("%d",&num);
+									cin.ignore();
+									bool success = false;
+									do 
 									{
-										cls;
-										printf("Edit full record? (y/n) or 'b' for back>: ");
-										scanf("%c",&full);
-									} while (!strchr("YyNnBb",full));
-									if (strchr("Nn",full))
-									{
-										for (int j = 0; j < dbFieldCnt; j++)
-											printf("\n%d: %s",j,dbFields[j].fieldName);
-										printf("\nInput number of field >: ");
-										int num;
-										scanf("%d",&num);
 										printf("\nInput new value of %s >: ",dbFields[num].fieldName);
 										char *temp = new char[255];
-										cin.ignore();
 										gets(temp);
-										editField(i,num,temp);
+										success = editField(i,num,temp);
+										if (!success)
+											puts("Type mistake. Try again");
 										delete(temp);
-										wait;
-									}
-									if (strchr("Yy",full))
-									{
-										cin.ignore();
-										for (int j = 0; j < dbFieldCnt; j++)
-										{
-											printf("\nInput new value for %s >: ",dbFields[j].fieldName);
-											char *temp = new char[255];
-											gets(temp);
-											editField(i,j,temp);
-											delete(temp);
-										}
-										wait;
-									}
-									if (strchr("Bb",full))
-										break;
+									} while (!success);
+									wait;
 								}
+								if (strchr("Yy",full))
+								{
+									cin.ignore();
+									for (int j = 0; j < dbFieldCnt; j++)
+									{
+										printf("\nInput new value for %s >: ",dbFields[j].fieldName);
+										char *temp = new char[255];
+										gets(temp);
+										editField(i,j,temp);
+										delete(temp);
+									}
+									wait;
+								}
+								if (strchr("Bb",full))
+									break;
+							
+							}
 								
 						} while (listcode!=27);
 						char savecode = 0;
@@ -294,7 +306,10 @@ void getFields()
 
 void getRecords()
 {
+
 	getFields();
+	for (int i = 0; i < dbHead.recordsCount*dbFieldCnt; i++)
+		dbFieldContent[i][0] = '\0';
 	fseek(dbFile,dbHead.headerSize,SEEK_SET);
 	for (int i = 0; i < dbHead.recordsCount; i++)
 	{
@@ -311,8 +326,15 @@ void getRecords()
 	fclose(dbFile);
 }
 
-void editField(int rec, int field, char *value)
+bool editField(int rec, int field, char *value)
 {
+	if (dbFields[field].fieldType == 'N')
+	{
+		for (int j = 0; j < strlen(value); j++)
+			if (!isdigit(value[j])&&!strchr("-.,",value[j]))
+				return false;
+	}
+		
 	if (field == 0)
 		dbFieldContent[rec*dbFieldCnt][1]='\0';
 	else
@@ -321,11 +343,12 @@ void editField(int rec, int field, char *value)
 	if (dbFields[field].fieldSize > strlen(value))
 		for (int i = strlen(value); i < dbFields[field].fieldSize; i++)
 			push_back(dbFieldContent[rec*dbFieldCnt+field],' ');
+	return true;
 }
 
 void makeNew()
 {
-	
+	fclose(dbFile);
 	FILE *tmp = fopen(dbFileName,"wb");
 	fwrite(&dbHead,32,1,tmp);
 	for (int i = 0; i < dbFieldCnt; i++)
@@ -361,6 +384,6 @@ void printRecord(int i)
 	{
 		gotoxy(23,j+6); puts(dbFields[j].fieldName);
 		gotoxy(45,j+6); puts(dbFieldContent[i*dbFieldCnt+j]);
-	}
+	} 
 }
 
