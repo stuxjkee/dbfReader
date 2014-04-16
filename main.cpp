@@ -87,7 +87,7 @@ int main()
 			case 0:
 				cls;		
 				puts("DBF files in this folder:");
-				system("dir /B *.dbf");
+				system("dir /B /D *.dbf");
 				do
 				{
 					fflush(stdin);
@@ -439,7 +439,11 @@ void printRecord(int i)
 {
 	for (int j = 0; j < dbFieldCnt; j++)
 	{
+		if (dbFields[j].fieldType == 'M')
+			continue;
 		gotoxy(23,j+6); puts(dbFields[j].fieldName);
-		gotoxy(45,j+6); puts(dbFieldContent[i*dbFieldCnt+j]);
+		if (j==0) gotoxy(44,j+6);
+		else gotoxy(45,j+6); 
+		puts(dbFieldContent[i*dbFieldCnt+j]);
 	} 
 }
