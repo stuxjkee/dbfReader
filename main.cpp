@@ -238,7 +238,6 @@ int main()
 								if (rp == 0)
 								{
 									cls;
-								//	cin.ignore();
 									for (int j = 0; j < dbFieldCnt; j++)
 									{
 										printf("\nInput new value for %s >: ",dbFields[j].fieldName);
