@@ -15,22 +15,17 @@ typedef __int16 integer;
 
 struct header
 {
-	byte version;
-	byte yy,mm,dd;
+	byte version,yy,mm,dd;
 	longint recordsCount;
-	integer headerSize;
-	integer recordSize;
+	integer headerSize,recordSize;
 	byte trash[20];
 };
 
 struct field
 {
-	char fieldName[11];
-	char fieldType;
+	char fieldName[11],fieldType;
 	longint address;
-	byte fieldSize;
-	byte fieldDecCnt;
-	byte trash[14];
+	byte fieldSize,fieldDecCnt,trash[14];
 };
 
 FILE *dbFile,*readme;
@@ -42,8 +37,6 @@ char dbBuffer[4096];
 int dbFieldCnt;
 char dbFieldContent[2001][4096];
 char tmp;
-char symb = 218;
-
 
 void gotoxy(int xpos, int ypos);
 void push_back(char *st,char ch);
@@ -55,6 +48,7 @@ bool editField(int rec, int field, char *value);
 void makeNew();
 bool deleteRecord(int i);
 void printRecord(int i);
+
 
 
 int main()
@@ -91,9 +85,9 @@ int main()
 		switch (p) 
 			{
 			case 0:
-				cls;
-				system("dir *.dbf");
-				putchar('\n');
+				cls;		
+				puts("DBF files in this folder:");
+				system("dir /B *.dbf");
 				do
 				{
 					fflush(stdin);
@@ -140,6 +134,7 @@ int main()
 					case 0:
 						cls;
 						printf("Information about %s\n\n",dbFileName);
+						printf("Database type: %d\n",dbHead.version);
 						printf("Last update: %d.%d.%d\n",dbHead.dd,dbHead.mm,dbHead.yy);
 						printf("Total records: %d\n",dbHead.recordsCount);
 						printf("Total fields: %d\n",dbFieldCnt);
@@ -215,10 +210,10 @@ int main()
 								if (rp == 1)
 								{
 									cls;
-									puts("Make a choice");
+									puts("Choice a field");
 									for (int j = 0; j < dbFieldCnt; j++)
 										printf("\n%d: %s",j,dbFields[j].fieldName);
-									printf("\nInput number of field >: ");
+									printf("\n\nInput number of field >: ");
 									int num;
 									scanf("%d",&num);
 									cin.ignore();
@@ -233,19 +228,26 @@ int main()
 											puts("Type mistake. Try again");
 										delete(temp);
 									} while (!success);
+									puts("\nComplete...\n");
 									wait;
 								}
 								if (rp == 0)
 								{
 									cls;
+								//	cin.ignore();
 									for (int j = 0; j < dbFieldCnt; j++)
 									{
-										printf("\nInput new value for %s >: ",dbFields[j].fieldName);
-										char *temp = new char[255];
-										gets(temp);
-										editField(i,j,temp);
-										delete(temp);
+										bool success = false;
+										do
+										{
+											printf("\nInput new value for %s >: ",dbFields[j].fieldName);
+											char *temp = new char[255];
+											gets(temp);
+											success = editField(i,j,temp);
+											delete(temp);
+										} while (!success);
 									}
+									puts("\nComplete...\n");
 									wait;
 								}
 								if (rp==2)
@@ -271,12 +273,12 @@ int main()
 							if (strchr("Yy",savecode))
 							{
 								makeNew();
-								puts("\nGood luck!\n");
+								puts("\nComplete.. Good luck!\n");
 								wait;
 							}
 							if (strchr("Nn",savecode))
 							{
-								puts("Good luck!\n");
+								puts("\nGood luck!\n");
 								wait;
 							}
 						} while (!strchr("YyNn",savecode));
@@ -293,6 +295,13 @@ int main()
 				cls;
 				char ch;
 				readme = fopen("readme.txt","r");
+				if (!readme)
+				{
+					cls;
+					puts("Can't open readme.txt\n");
+					wait;
+					continue;
+				}
 				while (!feof(readme))
 				{
 					ch = fgetc(readme);
@@ -378,6 +387,10 @@ bool editField(int rec, int field, char *value)
 			if (!isdigit(value[j])&&!strchr("-.,",value[j]))
 				return false;
 	}
+
+	if (dbFields[field].fieldType == 'L')
+		if (!strchr("YyNnTtFf?",value[0]))
+			return false;
 		
 	if (field == 0)
 		dbFieldContent[rec*dbFieldCnt][1]='\0';
@@ -430,4 +443,3 @@ void printRecord(int i)
 		gotoxy(45,j+6); puts(dbFieldContent[i*dbFieldCnt+j]);
 	} 
 }
-
