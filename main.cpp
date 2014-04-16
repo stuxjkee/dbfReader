@@ -392,10 +392,8 @@ bool editField(int rec, int field, char *value)
 		if (!strchr("YyNnTtFf?",value[0]))
 			return false;
 		
-	if (field == 0)
-		dbFieldContent[rec*dbFieldCnt][1]='\0';
-	else
-		dbFieldContent[rec*dbFieldCnt+field][0]='\0';
+	field == 0 ? dbFieldContent[rec*dbFieldCnt][1]='\0' : dbFieldContent[rec*dbFieldCnt+field][0]='\0';
+
 	strcat(dbFieldContent[rec*dbFieldCnt+field],value);
 	if (dbFields[field].fieldSize > strlen(value))
 		for (int i = strlen(value); i < dbFields[field].fieldSize; i++)
