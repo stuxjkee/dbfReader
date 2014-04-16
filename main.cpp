@@ -64,12 +64,13 @@ int main()
 	int code = 0, pcode = 0, punkts = 3, p = 0;
 	char mmenu[3][30] = {"Open DBF file","About program","Exit"};
 	char fmenu[3][40] = {"Information about database", "Show recors", "Back"};
+	char rmenu[4][30] = {"Edit full record", "Edit one field", "Delete record", "Back"};
 	while (!leave)
 	{
 		do
 		{
 			cls;
-			puts("---------------------------- Please make a choise: -----------------------------");
+			puts("---------------------------- Please make a choice: -----------------------------");
 			for (int i = 0; i < punkts; i++)
 			{
 				int k = (80 - strlen(mmenu[i])) / 2;
@@ -115,7 +116,7 @@ int main()
 					do
 					{
 						cls;
-						puts("---------------------------- Please make a choise: -----------------------------");
+						puts("---------------------------- Please make a choice: -----------------------------");
 						for (int i = 0; i < punkts; i++)
 						{
 							int k = (80 - strlen(fmenu[i])) / 2;
@@ -152,6 +153,11 @@ int main()
 						int listcode = 0;
 						do 
 						{	
+							if (dbFieldContent[i*dbFieldCnt][0]=='*')
+							{
+								i++;
+								continue;
+							}
 							cls;
 							gotoxy(30,0); printf("Current record: #%d of %d\n",i+1,dbHead.recordsCount);
 							for (int j = 0; j < 80; j++)
@@ -171,15 +177,35 @@ int main()
 								i<=0 ? i = dbHead.recordsCount-1 : --i;
 							if (strchr("Ee",char(listcode)))
 							{
-								char full;
+								
+								int rp = 0; int rcode = 0;
+								
 								do
 								{
 									cls;
-									printf("Edit full record? (y/n) or 'b' for back>: ");
-									scanf("%c",&full);
-								} while (!strchr("YyNnBb",full));
-								if (strchr("Nn",full))
+									puts("---------------------------- Please make a choice: -----------------------------");
+									for (int i = 0; i < 4; i++)
+									{
+										int k = (80 - strlen(rmenu[i])) / 2;
+										if (i==rp)
+										{
+											gotoxy(23,8+i*2);
+											putchar('>');
+										}
+										gotoxy(k,8+i*2); puts(rmenu[i]);
+									}
+									rcode = _getch();
+									if (rcode == 80)
+										rp > 2 ? rp = 0 : ++rp;
+									if (rcode == 72)
+										rp < 1 ? rp = 3 : --rp;
+							
+									} while (rcode!=13);
+								
+								if (rp == 1)
 								{
+									cls;
+									puts("Make a choice");
 									for (int j = 0; j < dbFieldCnt; j++)
 										printf("\n%d: %s",j,dbFields[j].fieldName);
 									printf("\nInput number of field >: ");
@@ -199,9 +225,10 @@ int main()
 									} while (!success);
 									wait;
 								}
-								if (strchr("Yy",full))
+								if (rp == 0)
 								{
-									cin.ignore();
+									cls;
+								//	cin.ignore();
 									for (int j = 0; j < dbFieldCnt; j++)
 									{
 										printf("\nInput new value for %s >: ",dbFields[j].fieldName);
@@ -212,8 +239,15 @@ int main()
 									}
 									wait;
 								}
-								if (strchr("Bb",full))
-									break;
+								if (rp==2)
+								{
+									cls;
+									deleteRecord(i) ? puts("Record marked as deleted") : puts("Record has already been removed");
+									putchar('\n');
+									wait;
+								}
+								if (rp==3)
+									continue;
 							
 							}
 								
