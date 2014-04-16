@@ -60,6 +60,7 @@ void printRecord(int i);
 int main()
 {
 	system("color 07");
+	setlocale(LC_ALL,"");
 	bool leave = false, pleave = false;
 	int code = 0, pcode = 0, punkts = 3, p = 0;
 	char mmenu[3][30] = {"Open DBF file","About program","Exit"};
@@ -139,7 +140,7 @@ int main()
 					case 0:
 						cls;
 						printf("Information about %s\n\n",dbFileName);
-						printf("Last update: %d%d%d\n",dbHead.dd,dbHead.mm,dbHead.yy);
+						printf("Last update: %d.%d.%d\n",dbHead.dd,dbHead.mm,dbHead.yy);
 						printf("Total records: %d\n",dbHead.recordsCount);
 						printf("Total fields: %d\n",dbFieldCnt);
 						printf("Size of header: %d\n",dbHead.headerSize);
@@ -149,15 +150,24 @@ int main()
 					case 1:
 						{
 						cls;
+						int cnt = dbHead.recordsCount;
 						int i = 0;
 						int listcode = 0;
 						do 
 						{	
+							if (cnt < 1 || i > dbHead.recordsCount-1)
+							{
+								cls;
+								puts("Database has no records...\n");
+								wait;
+								break;
+							}
 							if (dbFieldContent[i*dbFieldCnt][0]=='*')
 							{
 								i++;
 								continue;
-							}
+								cnt--;
+							};
 							cls;
 							gotoxy(30,0); printf("Current record: #%d of %d\n",i+1,dbHead.recordsCount);
 							for (int j = 0; j < 80; j++)
@@ -243,6 +253,7 @@ int main()
 								{
 									cls;
 									deleteRecord(i) ? puts("Record marked as deleted") : puts("Record has already been removed");
+									cnt--;
 									putchar('\n');
 									wait;
 								}
