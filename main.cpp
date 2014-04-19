@@ -48,7 +48,7 @@ bool editField(int rec, int field, char *value);
 void makeNew();
 bool deleteRecord(int i);
 void printRecord(int i);
-
+int findRecord(char *key);
 
 
 int main()
@@ -58,7 +58,7 @@ int main()
 	bool leave = false, pleave = false;
 	int code = 0, pcode = 0, punkts = 3, p = 0;
 	char mmenu[3][30] = {"Open DBF file","About program","Exit"};
-	char fmenu[3][40] = {"Information about database", "Show recors", "Back"};
+	char fmenu[4][40] = {"Information about database", "Show recors", "Find record", "Back"};
 	char rmenu[4][30] = {"Edit full record", "Edit one field", "Delete record", "Back"};
 	while (!leave)
 	{
@@ -112,7 +112,7 @@ int main()
 					{
 						cls;
 						puts("---------------------------- Please make a choice: -----------------------------");
-						for (int i = 0; i < punkts; i++)
+						for (int i = 0; i < 4; i++)
 						{
 							int k = (80 - strlen(fmenu[i])) / 2;
 							if (i==fp)
@@ -124,9 +124,9 @@ int main()
 						}
 						pcode = _getch();
 						if (pcode == 80)
-							fp > 1 ? fp = 0 : ++fp;
+							fp > 2 ? fp = 0 : ++fp;
 						if (pcode == 72)
-							fp < 1 ? fp = 2 : --fp;
+							fp < 1 ? fp = 3 : --fp;
 							
 					} while (pcode!=13);
 					switch (fp) 
@@ -284,8 +284,32 @@ int main()
 						} while (!strchr("YyNn",savecode));
 						break;
 						}
-					case 2:
+					case 3:
 						pleave = true;
+						break;
+					case 2:
+						cls;
+						char *key = new char[255];
+						fflush(stdin);
+						printf("Input key :> ");
+						gets(key);
+						int num = findRecord(key);
+						if (num == -1)
+							printf("%s not found...\n\n",key);
+						else
+						{
+							for (int q = 0; q < dbFieldCnt; q++)
+							{
+								if (dbFields[q].fieldType == 'M')
+									continue;
+								gotoxy(2,q+2); puts(dbFields[q].fieldName);
+								if (q==0) gotoxy(23,q+2);
+								else gotoxy(23,q+2); 
+								puts(dbFieldContent[num*dbFieldCnt+q]);
+							}
+							putchar('\n');
+						}	
+						wait;
 						break;
 					}
 				} while (!pleave);
@@ -444,4 +468,12 @@ void printRecord(int i)
 		else gotoxy(45,j+6); 
 		puts(dbFieldContent[i*dbFieldCnt+j]);
 	} 
+}
+int findRecord(char *key)
+{
+	for (int i = 0; i < dbHead.recordsCount; i++)
+		for (int j = 0; j < dbFieldCnt; j++)
+			if (strstr(dbFieldContent[i*dbFieldCnt+j],key))
+				return i;
+	return -1;
 }
