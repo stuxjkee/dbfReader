@@ -35,7 +35,7 @@ header dbHead;
 field dbFields[128];
 char dbBuffer[4096];
 int dbFieldCnt;
-char dbFieldContent[2001][4096];
+char** dbFieldContent;
 char tmp;
 
 void gotoxy(int xpos, int ypos);
@@ -135,6 +135,7 @@ int main()
 						cls;
 						printf("Information about %s\n\n",dbFileName);
 						printf("Database type: %d\n",dbHead.version);
+						printf("Database lang type: %d\n",(int)dbHead.trash[17]);
 						printf("Last update: %d.%d.%d\n",dbHead.dd,dbHead.mm,dbHead.yy);
 						printf("Total records: %d\n",dbHead.recordsCount);
 						printf("Total fields: %d\n",dbFieldCnt);
@@ -368,6 +369,7 @@ void getHeader()
 {
 	fseek(dbFile,0,SEEK_SET);
 	fread(&dbHead,32,1,dbFile);
+	
 }
 
 void getFields()
@@ -379,6 +381,9 @@ void getFields()
 		fread(&dbFields[i],32,1,dbFile);
 	
 	fread(&tmp,1,1,dbFile);
+	dbFieldContent = new char* [dbHead.recordsCount*dbFieldCnt];
+	for (int i = 0; i < dbHead.recordsCount*dbFieldCnt; i++)
+		dbFieldContent[i] = new char[dbHead.recordSize];
 }
 
 void getRecords()
@@ -400,7 +405,7 @@ void getRecords()
 			contentStart += dbFields[j].fieldSize;
 		}
 	}
-	fclose(dbFile);
+    
 }
 
 bool editField(int rec, int field, char *value)
@@ -463,6 +468,7 @@ void printRecord(int i)
 	{
 		if (dbFields[j].fieldType == 'M')
 			continue;
+		
 		gotoxy(23,j+6); puts(dbFields[j].fieldName);
 		if (j==0) gotoxy(44,j+6);
 		else gotoxy(45,j+6); 
@@ -477,3 +483,4 @@ int findRecord(char *key)
 				return i;
 	return -1;
 }
+
