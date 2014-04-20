@@ -57,7 +57,7 @@ int main()
 {
 	system("color 07");
 	setlocale(LC_ALL,"");
-	//changeFont();
+	changeFont();
 	bool leave = false, pleave = false;
 	int code = 0, pcode = 0, punkts = 3, p = 0;
 	char mmenu[3][30] = {"Open DBF file","About program","Exit"};
@@ -185,7 +185,6 @@ int main()
 								i<=0 ? i = dbHead.recordsCount-1 : --i;
 							if (strchr("Ee",char(listcode)))
 							{
-								
 								int rp = 0; int rcode = 0;
 								
 								do
@@ -271,6 +270,8 @@ int main()
 						do
 						{
 							cls;
+							if (dbHead.trash[17]==201)
+								break;
 							printf("Save changes? (y/n) >: ");
 							scanf("%c",&savecode);
 							if (strchr("Yy",savecode))
@@ -351,8 +352,8 @@ void changeFont()
 	SETCONSOLEFONT SetConsoleFont;
 	HMODULE hmod = GetModuleHandleA("KERNEL32.DLL");     // функция здесь
 	SetConsoleFont =(SETCONSOLEFONT) GetProcAddress(hmod, "SetConsoleFont");   // берем ее адрес
-	if (!SetConsoleFont) {cout<<"error\n" ; exit(1);}   //   если ошибка
-	SetConsoleFont(GetStdHandle(STD_OUTPUT_HANDLE),10);  // устанавливаем 10 шрифт..
+	if (!SetConsoleFont) {puts("error") ; exit(1);}   //   если ошибка
+	SetConsoleFont(GetStdHandle(STD_OUTPUT_HANDLE),8);  // устанавливаем 10 шрифт..
 	SetConsoleOutputCP(1251) ;  // устанавливаем кодировку вывода
 }
 
