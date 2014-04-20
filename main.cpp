@@ -38,6 +38,8 @@ int dbFieldCnt;
 char** dbFieldContent;
 char tmp;
 
+
+void changeFont();
 void gotoxy(int xpos, int ypos);
 void push_back(char *st,char ch);
 bool openFile(char *dbFileName);
@@ -55,6 +57,7 @@ int main()
 {
 	system("color 07");
 	setlocale(LC_ALL,"");
+	//changeFont();
 	bool leave = false, pleave = false;
 	int code = 0, pcode = 0, punkts = 3, p = 0;
 	char mmenu[3][30] = {"Open DBF file","About program","Exit"};
@@ -162,8 +165,7 @@ int main()
 							{
 								i++;
 								continue;
-								cnt--;
-							};
+							}
 							cls;
 							gotoxy(30,0); printf("Current record: #%d of %d\n",i+1,dbHead.recordsCount);
 							for (int j = 0; j < 80; j++)
@@ -343,6 +345,16 @@ int main()
 	} 
 }
 
+void changeFont()
+{
+	typedef BOOL (WINAPI *SETCONSOLEFONT)(HANDLE, DWORD);     // прототип недокументированый функции
+	SETCONSOLEFONT SetConsoleFont;
+	HMODULE hmod = GetModuleHandleA("KERNEL32.DLL");     // функция здесь
+	SetConsoleFont =(SETCONSOLEFONT) GetProcAddress(hmod, "SetConsoleFont");   // берем ее адрес
+	if (!SetConsoleFont) {cout<<"error\n" ; exit(1);}   //   если ошибка
+	SetConsoleFont(GetStdHandle(STD_OUTPUT_HANDLE),10);  // устанавливаем 10 шрифт..
+	SetConsoleOutputCP(1251) ;  // устанавливаем кодировку вывода
+}
 
 void gotoxy(int xpos, int ypos)
 {
