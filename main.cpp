@@ -51,6 +51,7 @@ void makeNew();
 bool deleteRecord(int i);
 void printRecord(int i);
 int findRecord(char *key);
+bool isDeleted(int i);
 
 
 int main()
@@ -60,15 +61,15 @@ int main()
 	changeFont();
 	bool leave = false, pleave = false;
 	int code = 0, pcode = 0, punkts = 3, p = 0;
-	char mmenu[3][30] = {"Open DBF file","About program","Exit"};
-	char fmenu[4][40] = {"Information about database", "Show recors", "Find record", "Back"};
-	char rmenu[4][30] = {"Edit full record", "Edit one field", "Delete record", "Back"};
+	char mmenu[3][30] = {"Вiдкрити DBF файл","Про програму","Вихiд"};
+	char fmenu[4][40] = {"Iнформацiя про базу", "Показати записи", "Знайти запис", "Назад"};
+	char rmenu[4][30] = {"Редагувати весь запис", "Редагувати одне поле", "Видалити запис", "Назад"};
 	while (!leave)
 	{
 		do
 		{
 			cls;
-			puts("---------------------------- Please make a choice: -----------------------------");
+			puts("------------------------------- Зробiть вибiр: --------------------------------");
 			for (int i = 0; i < punkts; i++)
 			{
 				int k = (80 - strlen(mmenu[i])) / 2;
@@ -89,13 +90,13 @@ int main()
 			{
 			case 0:
 				cls;		
-				puts("DBF files in this folder:");
+				puts("DBF файли в поточнiй директорiї:");
 				system("dir /B /D *.dbf");
 				do
 				{
 					fflush(stdin);
 					putchar('\n');
-					printf("Input filename >: ");
+					printf("Введiть назву файлу >: ");
 					gets(dbFileName);
 					if (!strstr(dbFileName,".dbf"))
 					{
@@ -104,7 +105,7 @@ int main()
 					}
 					dbFileAble = openFile(dbFileName);
 					if (!dbFileAble)
-						printf("Can't open %s Try again...\n",dbFileName);
+						printf("Не можу вiдкрити %s Спробуйте знову...\n",dbFileName);
 				} while (!dbFileAble);
 				getRecords();
 				
@@ -114,7 +115,7 @@ int main()
 					do
 					{
 						cls;
-						puts("---------------------------- Please make a choice: -----------------------------");
+						puts("------------------------------- Зробiть вибiр: --------------------------------");
 						for (int i = 0; i < 4; i++)
 						{
 							int k = (80 - strlen(fmenu[i])) / 2;
@@ -136,14 +137,14 @@ int main()
 					{
 					case 0:
 						cls;
-						printf("Information about %s\n\n",dbFileName);
-						printf("Database type: %d\n",dbHead.version);
-						printf("Database lang type: %d\n",(int)dbHead.trash[17]);
-						printf("Last update: %d.%d.%d\n",dbHead.dd,dbHead.mm,dbHead.yy);
-						printf("Total records: %d\n",dbHead.recordsCount);
-						printf("Total fields: %d\n",dbFieldCnt);
-						printf("Size of header: %d\n",dbHead.headerSize);
-						printf("Size of record: %d\n\n",dbHead.recordSize);
+						printf("Iнформацiя про %s\n\n",dbFileName);
+						printf("Тип бази: %d\n",dbHead.version);
+						printf("Кодування: %d\n",(int)dbHead.trash[17]);
+						printf("Останнє оновлення: %d.%d.%d\n",dbHead.dd,dbHead.mm,dbHead.yy);
+						printf("Всього записiв: %d\n",dbHead.recordsCount);
+						printf("Всього полiв: %d\n",dbFieldCnt);
+						printf("Розмiр поля: %d\n",dbHead.headerSize);
+						printf("Розмiр запису: %d\n\n",dbHead.recordSize);
 						wait;
 						break;
 					case 1:
@@ -154,35 +155,45 @@ int main()
 						int listcode = 0;
 						do 
 						{	
-							if (cnt < 1 || i > dbHead.recordsCount-1)
+							bool fl = false;
+							for (int each = 0; each < dbHead.recordsCount; each++)
+								if (!isDeleted(each))
+									fl = true;
+
+							if (!fl)
 							{
 								cls;
-								puts("Database has no records...\n");
+								puts("В базi вiдсутнi записи...\n");
 								wait;
 								break;
 							}
-							if (dbFieldContent[i*dbFieldCnt][0]=='*')
+							if (isDeleted(i))
 							{
-								i++;
+								while (isDeleted(i))
+									i >= dbHead.recordsCount - 1 ? i = 0 : i++;
 								continue;
 							}
 							cls;
-							gotoxy(30,0); printf("Current record: #%d of %d\n",i+1,dbHead.recordsCount);
+							gotoxy(30,0); printf("Поточний запис: #%d of %d\n",i+1,dbHead.recordsCount);
 							for (int j = 0; j < 80; j++)
 								putchar('-');
-							gotoxy(10,2); printf("Press %c to show next record",char(26));
-							gotoxy(45,2); printf("Press %c to show prev record",char(27));
-							gotoxy(10,3); printf("Press ESC to return to menu");
-							gotoxy(45,3); printf("Press E to record current record\n");								
+							gotoxy(10,2); printf("%c Показати наступний запис",char(26));
+							gotoxy(45,2); printf("%c Показати попереднiй запис",char(27));
+							gotoxy(10,3); printf("ESC Повернутись до меню");
+							gotoxy(45,3); printf("Е Редагувати запис\n");								
 							for (int j = 0; j < 80; j++)
 								putchar('-');
 							putchar('\n');
 							printRecord(i);
 							listcode = _getch();
-							if (listcode == 77)
+							if (listcode == 77 || listcode == 80)
 								i>=dbHead.recordsCount-1 ? i = 0 : ++i;
-							if (listcode == 75)
+							while (isDeleted(i))
+								i >= dbHead.recordsCount - 1 ? i = 0 : i++;
+							if (listcode == 75 || listcode == 72)
 								i<=0 ? i = dbHead.recordsCount-1 : --i;
+							while (isDeleted(i))
+								i == 0 ? i = dbHead.recordsCount-1 : --i;
 							if (strchr("Ee",char(listcode)))
 							{
 								int rp = 0; int rcode = 0;
@@ -190,7 +201,7 @@ int main()
 								do
 								{
 									cls;
-									puts("---------------------------- Please make a choice: -----------------------------");
+									puts("------------------------------- Зробiть вибiр: --------------------------------");
 									for (int i = 0; i < 4; i++)
 									{
 										int k = (80 - strlen(rmenu[i])) / 2;
@@ -212,25 +223,25 @@ int main()
 								if (rp == 1)
 								{
 									cls;
-									puts("Choice a field");
+									puts("Виберiть поле для редагування");
 									for (int j = 0; j < dbFieldCnt; j++)
 										printf("\n%d: %s",j,dbFields[j].fieldName);
-									printf("\n\nInput number of field >: ");
+									printf("\n\nВведiть номер поля >: ");
 									int num;
 									scanf("%d",&num);
 									cin.ignore();
 									bool success = false;
 									do 
 									{
-										printf("\nInput new value of %s >: ",dbFields[num].fieldName);
+										printf("\nНове значення для %s >: ",dbFields[num].fieldName);
 										char *temp = new char[255];
 										gets(temp);
 										success = editField(i,num,temp);
 										if (!success)
-											puts("Type mistake. Try again");
+											puts("Невiдповiднiсть типiв, спробуйте знову");
 										delete(temp);
 									} while (!success);
-									puts("\nComplete...\n");
+									puts("\nУспiшно...\n");
 									wait;
 								}
 								if (rp == 0)
@@ -242,20 +253,20 @@ int main()
 										bool success = false;
 										do
 										{
-											printf("\nInput new value for %s >: ",dbFields[j].fieldName);
+											printf("\nНове значення для %s >: ",dbFields[j].fieldName);
 											char *temp = new char[255];
 											gets(temp);
 											success = editField(i,j,temp);
 											delete(temp);
 										} while (!success);
 									}
-									puts("\nComplete...\n");
+									puts("\nУспiшно...\n");
 									wait;
 								}
 								if (rp==2)
 								{
 									cls;
-									deleteRecord(i) ? puts("Record marked as deleted") : puts("Record has already been removed");
+									deleteRecord(i) ? puts("Запис позначений як виделаний") : puts("Запис уже видалений");
 									cnt--;
 									putchar('\n');
 									wait;
@@ -272,17 +283,17 @@ int main()
 							cls;
 							if (dbHead.trash[17]==201)
 								break;
-							printf("Save changes? (y/n) >: ");
+							printf("Застосувати змiни? (y/n) >: ");
 							scanf("%c",&savecode);
 							if (strchr("Yy",savecode))
 							{
 								makeNew();
-								puts("\nComplete.. Good luck!\n");
+								puts("\nУспiшно... Всього найкращого!\n");
 								wait;
 							}
 							if (strchr("Nn",savecode))
 							{
-								puts("\nGood luck!\n");
+								puts("\nВсього найкращого!\n");
 								wait;
 							}
 						} while (!strchr("YyNn",savecode));
@@ -295,11 +306,11 @@ int main()
 						cls;
 						char *key = new char[255];
 						fflush(stdin);
-						printf("Input key :> ");
+						printf("Введiть ключ :> ");
 						gets(key);
 						int num = findRecord(key);
 						if (num == -1)
-							printf("%s not found...\n\n",key);
+							printf("%s вiдсутнiй...\n\n",key);
 						else
 						{
 							for (int q = 0; q < dbFieldCnt; q++)
@@ -326,7 +337,7 @@ int main()
 				if (!readme)
 				{
 					cls;
-					puts("Can't open readme.txt\n");
+					puts("Не можу вiдкрити readme.txt\n");
 					wait;
 					continue;
 				}
@@ -348,13 +359,13 @@ int main()
 
 void changeFont()
 {
-	typedef BOOL (WINAPI *SETCONSOLEFONT)(HANDLE, DWORD);     // прототип недокументированый функции
+	typedef BOOL (WINAPI *SETCONSOLEFONT)(HANDLE, DWORD);     
 	SETCONSOLEFONT SetConsoleFont;
-	HMODULE hmod = GetModuleHandleA("KERNEL32.DLL");     // функция здесь
-	SetConsoleFont =(SETCONSOLEFONT) GetProcAddress(hmod, "SetConsoleFont");   // берем ее адрес
-	if (!SetConsoleFont) {puts("error") ; exit(1);}   //   если ошибка
-	SetConsoleFont(GetStdHandle(STD_OUTPUT_HANDLE),8);  // устанавливаем 10 шрифт..
-	SetConsoleOutputCP(1251) ;  // устанавливаем кодировку вывода
+	HMODULE hmod = GetModuleHandleA("KERNEL32.DLL");    
+	SetConsoleFont =(SETCONSOLEFONT) GetProcAddress(hmod, "SetConsoleFont");  
+	if (!SetConsoleFont) exit(1);
+	SetConsoleFont(GetStdHandle(STD_OUTPUT_HANDLE),6); 
+	SetConsoleOutputCP(1251) ; 
 }
 
 void gotoxy(int xpos, int ypos)
@@ -497,3 +508,7 @@ int findRecord(char *key)
 	return -1;
 }
 
+bool isDeleted(int i)
+{
+	return dbFieldContent[i*dbFieldCnt][0] == '*';
+}
